@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render
 from django.http import JsonResponse
-#from .documents import *
+from .documents import *
 from .models import *
 from .CollectData import *
 import json
@@ -23,7 +23,18 @@ def search(request):
             return render(request, 'index/detail.html', context)
         except:
             print('KHÔNG TÌM THẤY KẾT QUẢ')
-    return JsonResponse({'Kết quả':' Xem chi tiết'})
+    if (request.method == 'POST'):
+        print (request.POST)
+        data = request.POST['data']
+        s1 = SentencesDocument.search().query("match", en_sentence = data)
+        s2 = SentencesDocument.search().query("match", vi_sentence = data)
+        res = []
+        for i in s1:
+            res.append([i.en_sentence, i.vi_sentence])
+        for i in s2:
+            res.append([i.en_sentence, i.vi_sentence])
+
+    return JsonResponse({'result': res})
 
 def insert(request):
     print(request.POST)
@@ -56,38 +67,47 @@ def insert(request):
     if(bool(isSave) == True):
         print('ĐỒNG Ý LƯU VÀO ELASTIC')
         try:
-            title, vi, en = get_corpus(link_document,xpath_title,xpath_en,xpath_vi,break_word)
+            # đoạn này kiểm tra trùng lặp bằng link document (lần 1)
+            doc = ParagraphsCorpus.objects.get(link_document = link_document)
+            title = doc.title
+            en = doc.get_en()
+            vi = doc.get_vi()
+            print('DỮ LIỆU ĐÃ TỒN TẠI - KHÔNG CẦN CÀO NỮA')
         except:
-            return JsonResponse({'Thông báo': 'xpath đã nhập hoặc link document có thể chưa đúng'})
-        try:
-            already = ParagraphsCorpus.objects.get(title = title)
-            if(already.sourcescorpus.id == source.id):
-                print(already)
-                print('DỮ LIỆU ĐÃ TỒN TẠI - KHÔNG LƯU')
-        except:
-            already = False
-            print('DỮ LIỆU CHƯA TỒN TẠI')
             try:
-                doc = ParagraphsCorpus()
-                doc.set_title(title)
-                doc.set_en(en)
-                doc.set_vi(vi)
-                doc.set_link_document(link_document)
-                doc.sourcescorpus = source
-                doc.save()
-                print('LƯU THÀNH CÔNG PARAGRAPH DOCUMENT')
-                try:
-                    for i in range(len(vi)):
-                        doc_st = SentencesCorpus(en_sentence = en[i], vi_sentence = vi[i], st_order = i)
-                        print ('TẠO THÀNH CÔNG SENTENCE: ', i)
-                        doc_st.paragraphscorpus = doc
-                        doc_st.save()
-                        print('LƯU THÀNH CÔNG SENTENCE: ', i)
-                except:
-                    print('KHÔNG LƯU ĐƯỢC SENTENCE')
-                print('LƯU THÀNH CÔNG')
+                title, vi, en = get_corpus(link_document,xpath_title,xpath_en,xpath_vi,break_word)
             except:
-                print('LƯU KHÔNG THÀNH CÔNG')
+                return JsonResponse({'Thông báo': 'xpath đã nhập hoặc link document có thể chưa đúng'})
+            try:
+                # đoạn này kiểm tra trùng lặp dữ liệu (lần 2) - bằng title của document
+                already = ParagraphsCorpus.objects.get(title = title)
+                if(already.sourcescorpus.id == source.id):
+                    print(already)
+                    print('DỮ LIỆU ĐÃ TỒN TẠI - KHÔNG LƯU')
+            except:
+                already = False
+                print('DỮ LIỆU CHƯA TỒN TẠI')
+                try:
+                    doc = ParagraphsCorpus()
+                    doc.set_title(title)
+                    doc.set_en(en)
+                    doc.set_vi(vi)
+                    doc.set_link_document(link_document)
+                    doc.sourcescorpus = source
+                    doc.save()
+                    print('LƯU THÀNH CÔNG PARAGRAPH DOCUMENT')
+                    try:
+                        for i in range(len(vi)):
+                            doc_st = SentencesCorpus(en_sentence = en[i], vi_sentence = vi[i], st_order = i)
+                            print ('TẠO THÀNH CÔNG SENTENCE: ', i)
+                            doc_st.paragraphscorpus = doc
+                            doc_st.save()
+                            print('LƯU THÀNH CÔNG SENTENCE: ', i)
+                    except:
+                        print('KHÔNG LƯU ĐƯỢC SENTENCE')
+                    print('LƯU THÀNH CÔNG')
+                except:
+                    print('LƯU KHÔNG THÀNH CÔNG')
     else:
         print('NGƯỜI DÙNG KHÔNG LƯU DỮ LIỆU VÀO ELASTIC')
         try:

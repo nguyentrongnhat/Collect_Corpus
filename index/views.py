@@ -31,3 +31,6 @@ def index(request):
     source_data = zip(source_link, page_name)
     context = {'source_data': source_data}
     return render(request, 'index/index.html', context)
+
+def search_page(request):
+    return render(request, 'index/search.html')

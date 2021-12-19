@@ -95,4 +95,60 @@ $(document).ready(function(){
             console.log('da doi: ', $('#form-option').attr('action'))
         }
     });
+
+
+
+    //###############################################
+    // SEARCH - FEARURE
+    //###############################################
+    console.log('OK da nap')
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrfToken = getCookie('csrftoken');
+    console.log('in ra:')
+    console.log(csrfToken)
+
+    function create_element(en, vi){
+        element = '<div class="row unit-corpus"><div class="col"><h6>English:</h6><p>'
+        + en
+        + '</p></div><div class="col"><h6>Vietnamese:</h6><p>'
+        +  vi
+        + '</p></div></div>'
+        return element
+    }
+
+    $('#search-btn').click(function(){
+        let input = $('#search-input').val()
+        console.log('Đã bấm')
+        if(input != ''){
+            $.ajax({
+                url: '/elastic/search',
+                data: {
+                    data: input,
+                    csrfmiddlewaretoken: csrfToken
+                },
+                type: 'POST',
+            }).done(function(res) {
+                $('.unit-corpus').remove()
+                for (let i = 0; i < res.result.length; i++) {
+
+                    console.log(res.result[i][0])
+                    console.log(res.result[i][1])
+                    $('#main-contain').append(create_element(res.result[i][0], res.result[i][1]))
+                }
+            })
+        }
+    })
 });
