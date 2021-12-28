@@ -3,6 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render
 from django.http import JsonResponse
+from elasticsearch_dsl.field import Keyword
 from .documents import *
 from .models import *
 from .CollectData import *
@@ -26,13 +27,22 @@ def search(request):
     if (request.method == 'POST'):
         print (request.POST)
         data = request.POST['data']
+        print('DATA: ', data)
         s1 = SentencesDocument.search().query("match", en_sentence = data)
         s2 = SentencesDocument.search().query("match", vi_sentence = data)
         res = []
         for i in s1:
-            res.append([i.en_sentence, i.vi_sentence])
+            en_res = highlight_search(i.en_sentence, data)
+            vi_res = highlight_search(i.vi_sentence, data)
+            res.append([en_res, vi_res])
+            
+            #res.append([i.en_sentence, i.vi_sentence])
         for i in s2:
-            res.append([i.en_sentence, i.vi_sentence])
+            en_res = highlight_search(i.en_sentence, data)
+            vi_res = highlight_search(i.vi_sentence, data)
+            res.append([en_res, vi_res])
+           
+            #res.append([i.en_sentence, i.vi_sentence])
 
     return JsonResponse({'result': res})
 

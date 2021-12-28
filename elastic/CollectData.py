@@ -1,10 +1,11 @@
+from django_elasticsearch_dsl.search import Search
 import requests
 from lxml import html
 import urllib
 import urllib.parse
 from langdetect import detect
 import langid
-
+import re
 from elastic.models import ParagraphsCorpus
 
 def url_encode(url):
@@ -239,3 +240,21 @@ def collect_title_by_list_pages(list_pages, link_page, page_query, document_link
         
         titles.append(title)
     return titles
+
+def highlight_search(text, search):
+    insensitive = re.compile(re.escape(search), re.IGNORECASE)
+    dem = 1
+    list_group = []
+    while(len(re.findall(search, text, re.IGNORECASE)) > 0):
+        print('lan: ',dem)
+        y = re.search(search, text, re.IGNORECASE)
+        print(y.group(), y.span())
+        list_group.append(y.group())
+        text = insensitive.sub('<span class="highlight">{}</span>'.format('/&*replace*&/'), text, 1)
+        #print(x)
+        dem+=1
+    print(list_group)
+    insensitive = re.compile(re.escape('/&*replace*&/'), re.IGNORECASE)
+    for i in list_group:
+        text = insensitive.sub(i, text, 1)
+    return text
