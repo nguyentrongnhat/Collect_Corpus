@@ -130,6 +130,7 @@ def insert(request):
     #return JsonResponse({'ket qua': 'thanh cong them mot'})
 
 def range_inserts(request):
+    print('RANGE INSERT')
     print(request.POST)
     start = int(request.POST['from'])
     end = int(request.POST['to'])
@@ -162,6 +163,8 @@ def range_inserts(request):
     print('XPATH EN: ', xpath_en)
     print('XPATH VI: ', xpath_vi)
     print('BREAK WORD: ', break_word)
+    print('START: ', start)
+    print('END: ', end)
     
     list_title = []
     list_doc_id = []
@@ -171,6 +174,7 @@ def range_inserts(request):
         print('ĐỒNG Ý LƯU VÀO ELASTIC')
         try:
             result = collect_corpus_by_range_page(start, end, link_page, page_query, xpath_doc_links, xpath_title, xpath_en, xpath_vi, break_word)
+            print('GỌI HÀM THÀNH CÔNG')
         except:
             return JsonResponse({'Thông báo': 'xpath đã nhập có thể chưa đúng'})
         

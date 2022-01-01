@@ -46,7 +46,7 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5):
+        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':'):
             continue
         break_scan = False
         for i in break_word:     
@@ -59,6 +59,8 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             try:
                 if(detect(i) == 'en' or langid.classify(i)[0] == 'en'):
                     count += 1
+                if(detect(i) == 'vi' or langid.classify(i)[0] == 'vi'):
+                    count -= 1
             except:
                 continue
         count_word  = len(tmp.split(' '))
@@ -81,7 +83,7 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5):
+        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':'):
             continue
         break_scan = False
         for i in break_word:     
@@ -119,20 +121,25 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
 
 
 def collect_document_links(url, document_links_xpath):
-    if ('%' not in url):
-        url = url_encode(url)
-    response = requests.get(url)
- 
-    # get byte string
-    byte_data = response.content
-    # get filtered source code
-    source_code = html.fromstring(byte_data)
-    
     links = []
-    a_tag = source_code.xpath(document_links_xpath)
-    print('sô lương: ', len(a_tag))
-    for i in a_tag:
-        links.append(i.get("href"))
+
+    '''if ('%' not in url):
+        url = url_encode(url)'''
+    try:
+        print('đã gọi: ', url)
+        response = requests.get(url)
+    
+        # get byte string
+        byte_data = response.content
+        # get filtered source code
+        source_code = html.fromstring(byte_data)
+        
+        a_tag = source_code.xpath(document_links_xpath)
+        print('sô lương: ', len(a_tag))
+        for i in a_tag:
+            links.append(i.get("href"))
+    except:
+        pass
     return links
 
 
@@ -140,13 +147,16 @@ def collect_corpus_by_range_page(start, end, link_page, page_query, document_lin
     links = []
     result = {}
     end+=1
+    '''print('ĐÃ VÀO HÀM')
+    print('START: ', start)
+    print('END: ', end)'''
     for i in range(start, end):
         page_path = link_page + page_query + str(i)
-        #print(page_path)
+        print(page_path)
         for j in collect_document_links(page_path, document_links_xpath):
             links.append(j)
-    '''for i in links:
-        print(i)'''
+    for i in links:
+        print(i)
     for path in links:
         if ('%' not in path):
             path = url_encode(path)
