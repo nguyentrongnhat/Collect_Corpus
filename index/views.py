@@ -18,8 +18,8 @@ def index(request):
     except:
         print('KHÔNG CÓ DỮ LIỆU CẦN TÌM')
 
-    s = SourcesCorpus.objects.get(pageName='TOMMVA')
-    print(s.pageLink)
+    #s = SourcesCorpus.objects.get(pageName='TOMMVA')
+    #print(s.pageLink)
     try:
         para = ParagraphsCorpus(title='test', en_content='test_en', vi_content='test_vi')
         para.sourcescorpus = s

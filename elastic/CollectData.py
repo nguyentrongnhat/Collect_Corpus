@@ -34,7 +34,8 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
     vi = []
     
     for i in range(len(break_word)):
-        break_word[i] = break_word[i].upper()
+        break_word[i] = break_word[i].upper().strip()
+    print(break_word)
     
     print('============== XỬ LÝ TIẾNG ANH ================')
     print(len(en_content_tags))
@@ -46,33 +47,34 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':'):
+        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':' or tmp.replace('\n','') in en):
+            print('continue')
             continue
         break_scan = False
         for i in break_word:     
             if(i in tmp.upper()):
                 break_scan = True
         if(break_scan == True):
+            print('Gặp break word')
             break
-        count = 0
-        for i in tmp.split(' '):
-            try:
-                if(detect(i) == 'en' or langid.classify(i)[0] == 'en'):
-                    count += 1
-                if(detect(i) == 'vi' or langid.classify(i)[0] == 'vi'):
-                    count -= 1
-            except:
-                continue
-        count_word  = len(tmp.split(' '))
-        print(count)
-        print(count_word)
-        if(count/count_word >= 0.38):
-            print('Duyệt: ', tmp.replace('\n',''))
-            en.append(tmp.replace('\n',''))
-        else:
-            print("Cho qua")
 
-    dem = 0
+        ############
+        print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - EN')
+        if (detect(tmp) == 'en' or  langid.classify(tmp)[0] == 'en'):
+            print('Duyệt')
+            en.append(tmp.replace('\n',''))
+            print('thêm vào en - không gọi hàm phân loại')
+        elif (detect(tmp) != 'vi' or  langid.classify(tmp)[0] != 'vi'):
+            lang = lang_classify(tmp, 'en')
+            print('lang: ', lang)
+            if (lang == 'en'):
+                print('thêm vào en')
+                en.append(tmp.replace('\n',''))
+        else:
+            print('Cho qua')
+        ############
+        print('EN:', len(en))
+
     print('============== XỬ LÝ TIẾNG VIỆT ================')
     print(len(vi_content_tags))
     for sentence in vi_content_tags:
@@ -83,41 +85,76 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':'):
+        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':' or tmp.replace('\n','') in vi):
+            print('continue')
             continue
         break_scan = False
         for i in break_word:     
             if(i in tmp.upper()):
                 break_scan = True
         if(break_scan == True):
+            print('Gặp break word')
             break
 
-        count = 0
-        for i in tmp.split(' '):
-            try:
-                if(detect(i) == 'vi' or langid.classify(i)[0] == 'vi'):
-                    count += 1
-            except:
-                continue
-        count_word  = len(tmp.split(' '))
-        print(count)
-        print(count_word)
-
-        if(count/count_word >= 0.38):
-            print('Duyệt: ', tmp.replace('\n',''))
+        ############
+        print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - VI')
+        if (detect(tmp) == 'vi' or  langid.classify(tmp)[0] == 'vi'):
+            print('Duyệt')
             vi.append(tmp.replace('\n',''))
-            print('đã thêm vào vi')
+        elif (detect(tmp) != 'en' or  langid.classify(tmp)[0] != 'en'):
+            lang = lang_classify(tmp, 'vi')
+            if (lang == 'vi'):
+                vi.append(tmp.replace('\n',''))
         else:
-            print("Cho qua")
+            print('cho qua')
+        ############
+        print('VI:', len(vi))
 
+    vi = list(dict.fromkeys(vi))
+    en = list(dict.fromkeys(en))
     
+    print(len(vi))
+    print(len(en))
+
     min = len(vi)
     if(min > len(en)):
         min = len(en)
         vi = vi[:min]
     else:
         en = en[:min]
+
+    
     return title, vi, en
+
+
+def lang_classify(text, lang):
+    print('vao ham: ', text)
+    if(lang == 'vi'):
+        other_lang = 'en'
+    elif(lang == 'en'):
+        other_lang = 'vi'
+    count = 0
+    for i in text.split(' '):
+        try:
+            de = detect(i)
+            cl = langid.classify(i)[0]
+            if(de == lang or cl == lang):
+                count += 1
+            if(de == other_lang or cl == other_lang):
+                count -= 1
+        except:
+            print('DÍNH LỖI')
+            continue
+    count_word  = len(text.split(' '))
+    print(lang,': ',count)
+    print('total: ', count_word)
+
+    if(count/count_word >= 0.25):
+        print('Duyệt: ', text.replace('\n',''))
+        return lang
+    else:
+        print("Cho qua")
+        return other_lang
 
 
 def collect_document_links(url, document_links_xpath):
@@ -168,8 +205,8 @@ def collect_corpus_by_range_page(start, end, link_page, page_query, document_lin
             print('DỮ LIỆU ĐÃ TỒN TẠI - KHÔNG CẦN CÀO NỮA')
         except:
             title, vi, en = get_corpus(path, title_xpath, en_xpath, vi_xpath, break_word)
-
-        result[title] = {'vi': vi, 'en': en, 'link': path}
+        if(len(vi)!= 0 and len(en)!=0):
+            result[title] = {'vi': vi, 'en': en, 'link': path}
     return result
 
 # Hàm này dùng tải dữ liệu theo danh sách trang
@@ -199,9 +236,9 @@ def collect_corpus_by_list_pages(list_pages, link_page, page_query, document_lin
         #print(title)
         #link = 'search?path=' + path
         #print(link)
-        result[title] = {'vi': vi, 'en': en, 'link': path}
+        if(len(vi)!= 0 and len(en)!=0):
+            result[title] = {'vi': vi, 'en': en, 'link': path}
     return result
-
 
 def get_title(url, title_xpath):
     if ('%' not in url):
