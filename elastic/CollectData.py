@@ -116,6 +116,18 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
     print(len(vi))
     print(len(en))
 
+    ######################
+    # XỬ LÝ CẮT CÂU
+    if(len(vi) == 1 or len(en) == 1):
+        print('XỬ LÝ CẮT CÂU')
+        vi = split_sentence(vi[0])
+        en = split_sentence(en[0])
+        if(len(vi) != len(en)):
+            nl_vi, nl_en = normalize_sentence(vi, en)
+            if(len(nl_vi) == len(nl_en)):
+                vi = nl_vi
+                en = nl_en
+    ######################
     min = len(vi)
     if(min > len(en)):
         min = len(en)
@@ -126,7 +138,61 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
     
     return title, vi, en
 
+# Hạm này dùng để phân câu cho một đoạn
+def split_sentence(text):
+    text_list = text.split('. ')
+    for i in range(len(text_list)):
+        if(text_list[i][-1] != '.'):
+            text_list[i] = text_list[i] + '.'
+    return text_list
 
+
+# Hàm này sẽ 'cố gắng' sữa lỗi chia subtitle theo câu không đồng nhất
+# Vì trong thực tế việc dịch thuật không đồng nhất giữa những người dịch dẫn đến việc dữ liệu không khớp nhau về cách chia câu
+# Ví dụ: 1 câu ở Tiếng Anh. Lại được dịch nhiều câu ở Tiếng việt và ngược lại
+def normalize_sentence(doc1, doc2):
+    length1 = 0
+    length2 = 0
+    min = 0
+    max = 0
+    i = 0
+    while(i < len(doc1) and i < len(doc2)):
+        if (len(doc1) == len(doc2)):
+            break
+        doc1[i] = doc1[i].replace('  ',' ')
+        doc2[i] = doc2[i].replace('  ',' ')
+        length1 = len(doc1[i].split(' '))
+        length2 = len(doc2[i].split(' '))
+        #print(length1, ':', doc1[i])
+        
+        #print(length2, ':', doc2[i])
+        max = length1
+        min = length2
+        if(length1 < length2):
+            max = length2
+            min = length1
+        error = float(min/max)
+        #print(error)
+        if (error <= 65):
+            #print(doc1[i])
+            #print(doc2[i])
+            #print('trung error:[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]')
+            try:
+                if(length1 < length2 and i < len(doc1)-1):
+                    doc1[i] = doc1[i] + ' ' + doc1[i+1]
+                    del doc1[i+1]
+                    i+=1
+                if(length1 > length2 and i < len(doc2)-1):
+                    doc2[i] = doc2[i] + doc2[i+1]
+                    del doc2[i+1]
+                    i+=1
+            except:
+                break
+        #print('=====================================================================')
+        i+=1
+    return doc1, doc2
+
+# Hàm này dùng để phân loại ngôn ngữ theo thành phần chữ cái
 def lang_classify(text, lang):
     print('vao ham: ', text)
     if(lang == 'vi'):
@@ -156,7 +222,7 @@ def lang_classify(text, lang):
         print("Cho qua")
         return other_lang
 
-
+# Hàm này dùng để crawl link các tài liệu cần thu thập từ trang chính
 def collect_document_links(url, document_links_xpath):
     links = []
 
@@ -179,7 +245,7 @@ def collect_document_links(url, document_links_xpath):
         pass
     return links
 
-
+# Hàm này dùng để crawl dữ liệu song ngữ theo khoản trang
 def collect_corpus_by_range_page(start, end, link_page, page_query, document_links_xpath, title_xpath, en_xpath, vi_xpath, break_word):
     links = []
     result = {}
@@ -209,7 +275,7 @@ def collect_corpus_by_range_page(start, end, link_page, page_query, document_lin
             result[title] = {'vi': vi, 'en': en, 'link': path}
     return result
 
-# Hàm này dùng tải dữ liệu theo danh sách trang
+# Hàm này dùng tải dữ liệu song ngữ theo danh sách trang
 def collect_corpus_by_list_pages(list_pages, link_page, page_query, document_links_xpath, title_xpath, en_xpath, vi_xpath, break_word):
     links = []
     result = {}
