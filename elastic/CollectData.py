@@ -60,20 +60,23 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
 
         ############
         print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - EN')
-        if (detect(tmp) == 'en' or  langid.classify(tmp)[0] == 'en'):
-            print('Duyệt')
-            en.append(tmp.replace('\n',''))
-            print('thêm vào en - không gọi hàm phân loại')
-        elif (detect(tmp) != 'vi' or  langid.classify(tmp)[0] != 'vi'):
-            lang = lang_classify(tmp, 'en')
-            print('lang: ', lang)
-            if (lang == 'en'):
-                print('thêm vào en')
+        try:
+            if (detect(tmp) == 'en' or  langid.classify(tmp)[0] == 'en'):
+                print('Duyệt')
                 en.append(tmp.replace('\n',''))
-        else:
-            print('Cho qua')
-        ############
-        print('EN:', len(en))
+                print('thêm vào en - không gọi hàm phân loại')
+            elif (detect(tmp) != 'vi' or  langid.classify(tmp)[0] != 'vi'):
+                lang = lang_classify(tmp, 'en')
+                print('lang: ', lang)
+                if (lang == 'en'):
+                    print('thêm vào en')
+                    en.append(tmp.replace('\n',''))
+            else:
+                print('Cho qua')
+            ############
+            print('EN:', len(en))
+        except:
+            print('Dính lỗi định danh')
 
     print('============== XỬ LÝ TIẾNG VIỆT ================')
     print(len(vi_content_tags))
@@ -98,17 +101,20 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
 
         ############
         print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - VI')
-        if (detect(tmp) == 'vi' or  langid.classify(tmp)[0] == 'vi'):
-            print('Duyệt')
-            vi.append(tmp.replace('\n',''))
-        elif (detect(tmp) != 'en' or  langid.classify(tmp)[0] != 'en'):
-            lang = lang_classify(tmp, 'vi')
-            if (lang == 'vi'):
+        try:
+            if (detect(tmp) == 'vi' or  langid.classify(tmp)[0] == 'vi'):
+                print('Duyệt')
                 vi.append(tmp.replace('\n',''))
-        else:
-            print('cho qua')
-        ############
-        print('VI:', len(vi))
+            elif (detect(tmp) != 'en' or  langid.classify(tmp)[0] != 'en'):
+                lang = lang_classify(tmp, 'vi')
+                if (lang == 'vi'):
+                    vi.append(tmp.replace('\n',''))
+            else:
+                print('cho qua')
+            ############
+            print('VI:', len(vi))
+        except:
+            print('Dính lỗi định danh')
 
     vi = list(dict.fromkeys(vi))
     en = list(dict.fromkeys(en))
@@ -145,7 +151,6 @@ def split_sentence(text):
         if(text_list[i][-1] != '.'):
             text_list[i] = text_list[i] + '.'
     return text_list
-
 
 # Hàm này sẽ 'cố gắng' sữa lỗi chia subtitle theo câu không đồng nhất
 # Vì trong thực tế việc dịch thuật không đồng nhất giữa những người dịch dẫn đến việc dữ liệu không khớp nhau về cách chia câu
