@@ -10,6 +10,7 @@ class SourcesCorpus(models.Model):
     xpathGetEnContent = models.TextField()
     xpathGetViContent = models.TextField()
     breakWord = models.TextField(blank=True)
+    continueWord = models.TextField(blank=True)
 
 
 

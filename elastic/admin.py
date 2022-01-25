@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import *
 
 class SourcesCorpusAdmin(admin.ModelAdmin):
-    list_display = ('pageName','pageLink','pageQuery','xpathGetDocLinks','xpathGetTitle','xpathGetEnContent','xpathGetViContent','breakWord')
+    list_display = ('pageName','pageLink','pageQuery','xpathGetDocLinks','xpathGetTitle','xpathGetEnContent','xpathGetViContent','breakWord', 'continueWord')
 
 
 class ParagraphsCorpusAdmin(admin.ModelAdmin):

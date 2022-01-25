@@ -1,4 +1,5 @@
 .header-content {
+    z-index: 3;
     background-color: #333;
     height: 56px;
     width: 100%;
@@ -33,5 +34,127 @@ a.nav-list_item {
 }
 
 .pt-5 {
-    margin-top: 50px;
+    margin-top: 30px;
+}
+
+/* download modal*/
+.overlay {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+.cover_page {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    z-index: 4;
+}
+
+.body_cover {
+    padding: 30px;
+    background-color: white;
+    margin: auto;
+    z-index: 5;
+    display: none;
+    border-radius: 5px;
+    
+}
+
+.inner_body_cover {
+    display: flex;
+    margin: auto;
+}
+
+.spinner-border .text-primary {
+    margin: auto;
+}
+
+td.option {
+    max-width: 200px;
+}
+
+td.source-name {
+    min-width: 450px;
+}
+
+.bock-button-madal {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.bock-button-madal_item {
+    justify-content: space-between;
+}
+
+#tasking-list {
+    z-index: 0;
+}
+
+/* Modal delete */
+.body-delete-modal {
+    background-color: white;
+    margin: auto;
+    z-index: 5;
+    display: none;
+    border-radius: 5px;
+    width: 500px;
+}
+
+.list-group-item.delelte-modal-content-item {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.block-button-delete-modal{
+    padding-top: 0px;
+    justify-content: space-between;
+}
+
+.confirm-content-delete-modal {
+    height: 100px;
+}
+
+/*-------deleting modal---------------*/
+.deleting-modal {
+    width: 400px;
+    height: 200px;
+    background-color: white;
+    margin: auto;
+    z-index: 5;
+    display: none;
+    border-radius: 5px;
+}
+
+/******** btn result task*/
+.btn-result-task-item {
+    justify-content: space-between; 
+    align-items: center;
+    display: flex;
+}
+
+.block-button-result-task {
+    display: none;
+    justify-content: space-between; 
+    align-items: center;
+    margin-top: 15px;
+}
+
+.btn .btn-result-task-item .a .b .c{
+    display: flex;
+}
+
+.list-group-item-tasking {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin-left: 0;
+    margin-right: 0;
+}
+
+li.page-item {
+    margin-left: 0;
+    margin-right: 0;
 }

@@ -20,6 +20,7 @@ class SourceCorpusDocument(Document):
             'pageLink',
             'pageQuery',
             'breakWord',
+            'continueWord',
             'xpathGetDocLinks',
             'xpathGetTitle',
             'xpathGetEnContent',

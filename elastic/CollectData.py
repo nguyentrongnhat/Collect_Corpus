@@ -1,3 +1,4 @@
+from distutils.command.check import check
 from django_elasticsearch_dsl.search import Search
 import requests
 from lxml import html
@@ -7,13 +8,16 @@ from langdetect import detect
 import langid
 import re
 from elastic.models import ParagraphsCorpus
+import nltk
+import nltk.data
+
 
 def url_encode(url):
     com = urllib.parse.urlparse(url)
     encoded = com.scheme + '://' + com.netloc + urllib.parse.quote(com.path)
     return encoded
 
-def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
+def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
     if ('%' not in url):
         url = url_encode(url)
     print(url)
@@ -31,11 +35,17 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
     en_content_tags=source_code.xpath(en_xpath)
     vi_content_tags=source_code.xpath(vi_xpath)
     en = []
+    en_nltk = []
     vi = []
+    vi_nltk = []
     
     for i in range(len(break_word)):
         break_word[i] = break_word[i].upper().strip()
     print(break_word)
+
+    for i in range(len(continue_word)):
+        continue_word[i] = continue_word[i].upper().strip()
+    print(continue_word)
     
     print('============== XỬ LÝ TIẾNG ANH ================')
     print(len(en_content_tags))
@@ -47,35 +57,50 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':' or tmp.replace('\n','') in en):
+        if (tmp == '' or len(tmp) <= 5  or tmp.replace('\n','') in en):
             print('continue')
             continue
         break_scan = False
+        continue_scan = False
         for i in break_word:     
             if(i in tmp.upper()):
                 break_scan = True
         if(break_scan == True):
             print('Gặp break word')
             break
+        for i in continue_word:     
+            if(i in tmp.upper()):
+                continue_scan = True
+        if(continue_scan == True):
+            print('Gặp continue word')
+            continue
 
         ############
         print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - EN')
         try:
             if (detect(tmp) == 'en' or  langid.classify(tmp)[0] == 'en'):
-                print('Duyệt')
+                tmp_split = split_sentence(tmp.replace('\n',''))
+                for sen in tmp_split:
+                    en_nltk.append(sen)
                 en.append(tmp.replace('\n',''))
+                print('Duyệt')
                 print('thêm vào en - không gọi hàm phân loại')
             elif (detect(tmp) != 'vi' or  langid.classify(tmp)[0] != 'vi'):
                 lang = lang_classify(tmp, 'en')
                 print('lang: ', lang)
                 if (lang == 'en'):
                     print('thêm vào en')
+                    tmp_split = split_sentence(tmp.replace('\n',''))
+                    for sen in tmp_split:
+                        en_nltk.append(sen)
                     en.append(tmp.replace('\n',''))
+                    print('Duyệt')
             else:
                 print('Cho qua')
             ############
             print('EN:', len(en))
         except:
+            print('EN:', len(en))
             print('Dính lỗi định danh')
 
     print('============== XỬ LÝ TIẾNG VIỆT ================')
@@ -88,69 +113,112 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5 or tmp[-1] == ':' or tmp.replace('\n','') in vi):
+        if (tmp == '' or len(tmp) <= 5 or tmp.replace('\n','') in vi):
             print('continue')
             continue
+        
         break_scan = False
+        continue_scan = False
         for i in break_word:     
             if(i in tmp.upper()):
                 break_scan = True
         if(break_scan == True):
             print('Gặp break word')
             break
+        for i in continue_word:     
+            if(i in tmp.upper()):
+                continue_scan = True
+        if(continue_scan == True):
+            print('Gặp continue word')
+            continue
 
         ############
         print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - VI')
         try:
             if (detect(tmp) == 'vi' or  langid.classify(tmp)[0] == 'vi'):
-                print('Duyệt')
+                tmp_split = split_sentence(tmp.replace('\n',''))
+                for sen in tmp_split:
+                    vi_nltk.append(sen)
                 vi.append(tmp.replace('\n',''))
+                print('Duyệt')
             elif (detect(tmp) != 'en' or  langid.classify(tmp)[0] != 'en'):
                 lang = lang_classify(tmp, 'vi')
                 if (lang == 'vi'):
+                    tmp_split = split_sentence(tmp.replace('\n',''))
+                    for sen in tmp_split:
+                        vi_nltk.append(sen)
                     vi.append(tmp.replace('\n',''))
+                    print('Duyệt')
             else:
                 print('cho qua')
             ############
             print('VI:', len(vi))
         except:
+            print('VI:', len(vi))
             print('Dính lỗi định danh')
 
-    vi = list(dict.fromkeys(vi))
-    en = list(dict.fromkeys(en))
-    
-    print(len(vi))
-    print(len(en))
-
-    ######################
-    # XỬ LÝ CẮT CÂU
-    if(len(vi) == 1 or len(en) == 1):
-        print('XỬ LÝ CẮT CÂU')
-        vi = split_sentence(vi[0])
-        en = split_sentence(en[0])
-        if(len(vi) != len(en)):
-            nl_vi, nl_en = normalize_sentence(vi, en)
-            if(len(nl_vi) == len(nl_en)):
-                vi = nl_vi
-                en = nl_en
-    ######################
-    min = len(vi)
-    if(min > len(en)):
-        min = len(en)
-        vi = vi[:min]
+    if(len(en_nltk) == len(vi_nltk)):
+        vi_nltk = list(dict.fromkeys(vi_nltk))
+        en_nltk = list(dict.fromkeys(en_nltk))
+        ######################
+        # XỬ LÝ CẮT CÂU
+        if(len(vi_nltk) == 1 and len(en_nltk) == 1):
+            print('XỬ LÝ CẮT CÂU')
+            vi_nltk = split_sentence(vi_nltk[0])
+            en_nltk = split_sentence(en_nltk[0])
+            if(len(vi) != len(en)):
+                nl_vi, nl_en = normalize_sentence(vi, en)
+                if(len(nl_vi) == len(nl_en)):
+                    vi_nltk = nl_vi
+                    en_nltk = nl_en
+        ######################
+        check_valid = False
+        for l in range(len(vi_nltk)):
+            len_vi = len(vi_nltk[l].split(' '))
+            len_en = len(en_nltk[l].split(' '))
+            print('check_len_vi: ', len_vi)
+            print('check_len_en: ', len_en)
+            if(len_vi < 0.35*len_en or len_en < 0.35*len_vi):
+                #print('KHÔNG CHÍNH XÁC - CONTINUE')
+                check_valid = True
+                break
+        if(check_valid == False):
+            #print('KHÔNG CHÍNH XÁC - CONTINUE')
+            return title, vi_nltk, en_nltk
     else:
-        en = en[:min]
+        vi = list(dict.fromkeys(vi))
+        en = list(dict.fromkeys(en))
+        
+        print(len(vi))
+        print(len(en))
 
-    
-    return title, vi, en
+        ######################
+        # XỬ LÝ CẮT CÂU
+        if(len(vi) == 1 and len(en) == 1):
+            print('XỬ LÝ CẮT CÂU')
+            vi = split_sentence(vi[0])
+            en = split_sentence(en[0])
+            if(len(vi) != len(en)):
+                nl_vi, nl_en = normalize_sentence(vi, en)
+                if(len(nl_vi) == len(nl_en)):
+                    vi = nl_vi
+                    en = nl_en
+        ######################
+        min = len(vi)
+        if(min > len(en)):
+            min = len(en)
+            vi = vi[:min]
+        else:
+            en = en[:min]
+
+        
+        return title, vi, en
 
 # Hạm này dùng để phân câu cho một đoạn
 def split_sentence(text):
-    text_list = text.split('. ')
-    for i in range(len(text_list)):
-        if(text_list[i][-1] != '.'):
-            text_list[i] = text_list[i] + '.'
-    return text_list
+    nltk.download('punkt')
+    sent_text = nltk.sent_tokenize(text)
+    return sent_text
 
 # Hàm này sẽ 'cố gắng' sữa lỗi chia subtitle theo câu không đồng nhất
 # Vì trong thực tế việc dịch thuật không đồng nhất giữa những người dịch dẫn đến việc dữ liệu không khớp nhau về cách chia câu
@@ -227,137 +295,6 @@ def lang_classify(text, lang):
         print("Cho qua")
         return other_lang
 
-# Hàm này dùng để crawl link các tài liệu cần thu thập từ trang chính
-def collect_document_links(url, document_links_xpath):
-    links = []
-
-    '''if ('%' not in url):
-        url = url_encode(url)'''
-    try:
-        print('đã gọi: ', url)
-        response = requests.get(url)
-    
-        # get byte string
-        byte_data = response.content
-        # get filtered source code
-        source_code = html.fromstring(byte_data)
-        
-        a_tag = source_code.xpath(document_links_xpath)
-        print('sô lương: ', len(a_tag))
-        for i in a_tag:
-            links.append(i.get("href"))
-    except:
-        pass
-    return links
-
-# Hàm này dùng để crawl dữ liệu song ngữ theo khoản trang
-def collect_corpus_by_range_page(start, end, link_page, page_query, document_links_xpath, title_xpath, en_xpath, vi_xpath, break_word):
-    links = []
-    result = {}
-    end+=1
-    '''print('ĐÃ VÀO HÀM')
-    print('START: ', start)
-    print('END: ', end)'''
-    for i in range(start, end):
-        page_path = link_page + page_query + str(i)
-        print(page_path)
-        for j in collect_document_links(page_path, document_links_xpath):
-            links.append(j)
-    for i in links:
-        print(i)
-    for path in links:
-        if ('%' not in path):
-            path = url_encode(path)
-        try:
-            doc = ParagraphsCorpus.objects.get(link_document = path)
-            title = doc.title
-            en = doc.get_en()
-            vi = doc.get_vi()
-            print('DỮ LIỆU ĐÃ TỒN TẠI - KHÔNG CẦN CÀO NỮA')
-        except:
-            title, vi, en = get_corpus(path, title_xpath, en_xpath, vi_xpath, break_word)
-        if(len(vi)!= 0 and len(en)!=0):
-            result[title] = {'vi': vi, 'en': en, 'link': path}
-    return result
-
-# Hàm này dùng tải dữ liệu song ngữ theo danh sách trang
-def collect_corpus_by_list_pages(list_pages, link_page, page_query, document_links_xpath, title_xpath, en_xpath, vi_xpath, break_word):
-    links = []
-    result = {}
-    for i in list_pages:
-        page_path = link_page + page_query + str(i)
-
-        for j in collect_document_links(page_path, document_links_xpath):
-            links.append(j)
-    '''for i in links:
-        print(i)'''
-    for path in links:
-        if ('%' not in path):
-            path = url_encode(path)
-        try:
-            doc = ParagraphsCorpus.objects.get(link_document = path)
-            title = doc.title
-            en = doc.get_en()
-            vi = doc.get_vi()
-            print('DỮ LIỆU ĐÃ TỒN TẠI - KHÔNG CẦN CÀO NỮA')
-        except:
-            title, vi, en = get_corpus(path, title_xpath, en_xpath, vi_xpath, break_word)
-        '''if(len(vi) != len(en)):
-            continue'''
-        #print(title)
-        #link = 'search?path=' + path
-        #print(link)
-        if(len(vi)!= 0 and len(en)!=0):
-            result[title] = {'vi': vi, 'en': en, 'link': path}
-    return result
-
-def get_title(url, title_xpath):
-    if ('%' not in url):
-        url = url_encode(url)
-    response = requests.get(url)
-    byte_data = response.content
-    source_code = html.fromstring(byte_data)
-    
-    title = source_code.xpath(title_xpath)
-    title = title[0].text_content()
-    return title
-
-def collect_title_by_range_page(start, end, link_page, page_query, document_links_xpath, title_xpath):
-    titles = []
-    links = []
-    end+=1
-    for i in range(start, end):
-        page_path = link_page + page_query + str(i)
-
-        for j in collect_document_links(page_path, document_links_xpath):
-            links.append(j)
-
-    for path in links:
-        if ('%' not in path):
-            path = url_encode(path)
-        
-        title = get_title(path, title_xpath)
-
-        titles.append(title)
-    return titles
-
-def collect_title_by_list_pages(list_pages, link_page, page_query, document_links_xpath, title_xpath):
-    links = []
-    titles = []
-    for i in list_pages:
-        page_path = link_page + page_query + str(i)
-
-        for j in collect_document_links(page_path, document_links_xpath):
-            links.append(j)
-
-    for path in links:
-        if ('%' not in path):
-            path = url_encode(path)
-        
-        title = get_title(path, title_xpath)
-        
-        titles.append(title)
-    return titles
 
 def highlight_search(text, search):
     insensitive = re.compile(re.escape(search), re.IGNORECASE)
@@ -376,3 +313,5 @@ def highlight_search(text, search):
     for i in list_group:
         text = insensitive.sub(i, text, 1)
     return text
+
+
