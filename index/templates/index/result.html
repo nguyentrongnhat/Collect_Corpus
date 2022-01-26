@@ -54,21 +54,21 @@
             </thead>
             <tbody>
                 {% for result in list_result %}
-                <tr id="{{ result.1 }}">
-                    <td style="width: 70px;">{{forloop.counter}}</td>
-                    <td>{{ result.title }}</td>
+                <tr id="{{ result.1.id }}">
+                    <td style="width: 70px;">{{result.0}}</td>
+                    <td>{{ result.1.title }}</td>
                     <td style="width: 100px;">
-                        <a href="{% url view %}?doc_id={{ result.id }}" class="btn btn-success" style="display: flex;"
+                        <a href="{% url view %}?doc_id={{ result.1.id }}" class="btn btn-success" style="display: flex; justify-content: center;"
                             title="Xem chi tiết">
                             <i class="fas fa-poll-h" style="margin-right: 6px;"></i>
                             <div style="font-size: 11px;">Detail</div>
                         </a>
                     </td>
                     <td style="width: 100px;">
-                        <button type="button" data-docid="{{ result.id }}" class="btn btn-danger delete-btn"
-                            style="display: flex;" title="Xóa tài liệu">
-                            <i class="fas fa-trash-alt" style="margin-right: 6px;" data-docid="{{ result.id }}"></i>
-                            <div style="font-size: 11px;" data-docid="{{ result.id }}">Delete</div>
+                        <button type="button" data-docid="{{ result.1.id }}" class="btn btn-danger delete-btn"
+                            style="display: flex; justify-content: center;" title="Xóa tài liệu">
+                            <i class="fas fa-trash-alt" style="margin-right: 6px;" data-docid="{{ result.1.id }}"></i>
+                            <div style="font-size: 11px;" data-docid="{{ result.1.id }}">Delete</div>
                         </button>
                     </td>
                 </tr>
@@ -99,32 +99,32 @@
         {% if is_paging_source %}
         <nav aria-label="Page navigation example">
             <ul class="pagination" style="display: flex; justify-content: center;">
-                {% if list_result.has_previous %}
+                {% if paginator_doc.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page=1">&laquo; first</a>
                 </li>
                 <li class="page-item">
                     <a class="page-link"
-                        href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page={{ list_result.previous_page_number }}">
+                        href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page={{ paginator_doc.previous_page_number }}">
                             previous</a>
                 </li>
                 {% endif %}
 
                 <li class="page-item disabled">
                     <span class="page-link">
-                        Page {{ list_result.number }} of {{ list_result.paginator.num_pages }}.
+                        Page {{ paginator_doc.number }} of {{ paginator_doc.paginator.num_pages }}.
                     </span>
                 </li>
                 
-                {% if list_result.has_next %}
+                {% if paginator_doc.has_next %}
                 <li class="page-item">
                     <a class="page-link"
-                        href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page={{ list_result.next_page_number }}">
+                        href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page={{ paginator_doc.next_page_number }}">
                             next</a>
                 </li>
                 <li class="page-item">
                     <a class="page-link"
-                    href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page={{ list_result.paginator.num_pages }}">last
+                    href="{% url 'all_doc_from_source' %}?link_page={{ link_page }}&page={{ paginator_doc.paginator.num_pages }}">last
                     &raquo;</a>
                 </li>
                 {% endif %}
@@ -135,32 +135,32 @@
         {% if is_paging_result %}
         <nav aria-label="Page navigation example">
             <ul class="pagination" style="display: flex; justify-content: center;">
-                {% if list_result.has_previous %}
+                {% if paginator_doc.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page=1">&laquo; first</a>
                 </li>
                 <li class="page-item">
                     <a class="page-link"
-                        href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page={{ list_result.previous_page_number }}">
+                        href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page={{ paginator_doc.previous_page_number }}">
                             previous</a>
                 </li>
                 {% endif %}
 
                 <li class="page-item disabled">
                     <span class="page-link">
-                        Page {{ list_result.number }} of {{ list_result.paginator.num_pages }}.
+                        Page {{ paginator_doc.number }} of {{ paginator_doc.paginator.num_pages }}.
                     </span>
                 </li>
                 
-                {% if list_result.has_next %}
+                {% if paginator_doc.has_next %}
                 <li class="page-item">
                     <a class="page-link"
-                        href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page={{ list_result.next_page_number }}">
+                        href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page={{ paginator_doc.next_page_number }}">
                             next</a>
                 </li>
                 <li class="page-item">
                     <a class="page-link"
-                    href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page={{ list_result.paginator.num_pages }}">last
+                    href="{% url 'resutl_list_document' %}?thread_name={{ thread_name }}&page={{ paginator_doc.paginator.num_pages }}">last
                     &raquo;</a>
                 </li>
                 {% endif %}

@@ -51,8 +51,9 @@ def all_doc_from_source(request):
     '''for i in documents:
         print(i.title)
         print()'''
-    list_title = []
-    list_doc_id = []
+    #list_title = []
+    #list_doc_id = []
+    list_stt = []
     corpus_sentence = 0
     view = 'search_elastic'
     try:
@@ -62,21 +63,27 @@ def all_doc_from_source(request):
         return JsonResponse({'Thông báo': 'xpath đã nhập có thể chưa đúng'})
     
     for i in range(len(documents)):
+        list_stt.append(i+1)
         corpus_sentence += len(documents[i].get_en())
-        list_title.append(documents[i].title)
-        list_doc_id.append('?doc_id=' + str(documents[i].id))
-    list_result = zip(list_title, list_doc_id)
+        #list_title.append(documents[i].title)
+        #list_doc_id.append('?doc_id=' + str(documents[i].id))
+    #list_result = zip(list_title, list_doc_id)
 
     paginator = Paginator(documents, 15) # Show 15 contacts per page.
+    paginator_stt = Paginator(list_stt, 15) # Show 15 contacts per page.
+    
 
     if('page' in request.GET):
         page_number = request.GET.get('page')
     else:
         page_number = 1
-    page_obj = paginator.get_page(page_number)
+    page_obj_doc = paginator.get_page(page_number)
+    page_obj_stt = paginator_stt.get_page(page_number)
+
+    page_obj = zip(page_obj_stt, page_obj_doc)
     #print('PAGE: ', page_number)
     #print(request.GET)
-    context = {'list_result': page_obj, 'length': documents.count(), 'view': view, 'corpus_sentence': corpus_sentence, 'link_page': link_page, 'is_paging_source': True}
+    context = {'list_result': page_obj, 'paginator_doc': page_obj_doc, 'length': documents.count(), 'view': view, 'corpus_sentence': corpus_sentence, 'link_page': link_page, 'is_paging_source': True}
     return render(request, 'index/result.html', context)
     
 def search(request):
@@ -375,17 +382,6 @@ def range_insert_handle (req):
         num_loop_out+=1
     global data_documents_download
     data_documents_download[thread_name] = list_doc_id 
-    '''else:
-        print('NGƯỜI DÙNG KHÔNG LƯU VÀO ELASTIC')
-        try:
-            titles = collect_title_by_range_page(start, end, link_page, page_query, xpath_doc_links, xpath_title)
-            print('titles: ', titles)
-            context = {'titles': titles, 'length': len(titles)}
-            return render(request, 'index/result.html', context)
-        except:
-            return JsonResponse({'Thông báo': 'xpath để lấy title hoặc xpath để lấy link docment chưa đúng'})
-    #print('NGƯỜI DÙNG KHÔNG LƯU DỮ LIỆU')
-    #return JsonResponse({'Thông báo': 'Chức năng này chỉ hoạt động khi bạn tick vào mục "Lưu vào elastic search"'})'''
 
 def range_inserts(request):
     try:
@@ -516,17 +512,6 @@ def multipage_insert_handle (req):
         num_loop_out+=1
     global data_documents_download
     data_documents_download[thread_name] = list_doc_id
-    '''else:
-        print('NGƯỜI DÙNG KHÔNG LƯU VÀO ELASTIC')
-        try:
-            titles = collect_title_by_list_pages(list_pages, link_page, page_query, xpath_doc_links, xpath_title)
-            print('titles: ', titles)
-            context = {'titles': titles, 'length': len(titles)}
-            return render(request, 'index/result.html', context)
-        except:
-            return JsonResponse({'Thông báo': 'xpath để lấy title hoặc xpath để lấy link docment chưa đúng'})
-    #print('NGƯỜI DÙNG KHÔNG LƯU DỮ LIỆU')
-    #return JsonResponse({'Thông báo': 'Chức năng này chỉ hoạt động khi bạn tick vào mục "Lưu vào elastic search"'})'''
 
 def update_progress_download(request):
     thread_name = request.POST['thread_name']
@@ -584,25 +569,32 @@ def result_list_document(request):
             continue
     print('NUMMBER OBJECT: ', len(documents))
 
-    list_title = []
-    list_doc_id = []
+    #list_title = []
+    #list_doc_id = []
+    list_stt = []
     corpus_sentence = 0
     view = 'search_elastic'
     
     for i in range(len(documents)):
+        list_stt.append(i+1)
         corpus_sentence += len(documents[i].get_en())
-        list_title.append(documents[i].title)
-        list_doc_id.append('?doc_id=' + str(documents[i].id))
-    list_result = zip(list_title, list_doc_id)
+        #list_title.append(documents[i].title)
+        #list_doc_id.append('?doc_id=' + str(documents[i].id))
+    #list_result = zip(list_title, list_doc_id)
 
     paginator = Paginator(documents, 15) # Show 15 contacts per page.
+    paginator_stt = Paginator(list_stt, 15) # Show 15 contacts per page.
 
     if('page' in request.GET):
         page_number = request.GET.get('page')
     else:
         page_number = 1
-    page_obj = paginator.get_page(page_number)
-    context = {'list_result': page_obj, 'length': len(documents), 'view': view, 'corpus_sentence': corpus_sentence,'is_paging_result': True, 'thread_name': thread_name}
+    page_obj_doc = paginator.get_page(page_number)
+    page_obj_stt = paginator_stt.get_page(page_number)
+
+    page_obj = zip(page_obj_stt, page_obj_doc)
+
+    context = {'list_result': page_obj, 'paginator_doc': page_obj_doc, 'length': len(documents), 'view': view, 'corpus_sentence': corpus_sentence,'is_paging_result': True, 'thread_name': thread_name}
     return render(request, 'index/result.html', context)    
 
 def delete_doc(request):
