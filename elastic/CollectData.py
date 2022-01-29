@@ -57,7 +57,7 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5  or tmp.replace('\n','') in en):
+        if (tmp == '' or len(tmp.split(' ')) <= 3  or tmp.replace('\n','') in en):
             print('continue')
             continue
         break_scan = False
@@ -78,14 +78,41 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
         ############
         print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - EN')
         try:
-            if (detect(tmp) == 'en' or  langid.classify(tmp)[0] == 'en'):
+            de  = detect(tmp)
+            cl = langid.classify(tmp)[0]
+            count_vi = 0
+            count_en = 0
+            if(de == 'vi' or cl == 'vi'):
+                count_vi += 1
+            if(de == 'en' or cl == 'en'):
+                count_en += 1
+            #------------------------------
+            if(len(tmp.split(' ')) < 15):
+                lang = lang_classify(tmp, 'en')
+                if (lang == 'en'):
+                    tmp_split = split_sentence(tmp.replace('\n',''))
+                    for sen in tmp_split:
+                        en_nltk.append(sen)
+                    en.append(tmp.replace('\n',''))
+                    print('Duyệt')
+            elif (de == 'en' and  cl == 'en'):
                 tmp_split = split_sentence(tmp.replace('\n',''))
                 for sen in tmp_split:
                     en_nltk.append(sen)
                 en.append(tmp.replace('\n',''))
                 print('Duyệt')
                 print('thêm vào en - không gọi hàm phân loại')
-            elif (detect(tmp) != 'vi' or  langid.classify(tmp)[0] != 'vi'):
+            elif (count_vi == count_en):
+                lang = lang_classify(tmp, 'en')
+                print('lang: ', lang)
+                if (lang == 'en'):
+                    print('thêm vào en')
+                    tmp_split = split_sentence(tmp.replace('\n',''))
+                    for sen in tmp_split:
+                        en_nltk.append(sen)
+                    en.append(tmp.replace('\n',''))
+                    print('Duyệt')
+            elif (de != 'vi' or  cl != 'vi'):
                 lang = lang_classify(tmp, 'en')
                 print('lang: ', lang)
                 if (lang == 'en'):
@@ -113,7 +140,7 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
             pass
         print()
         print('Gặp: ', tmp.replace('\n',''))
-        if (tmp == '' or len(tmp) <= 5 or tmp.replace('\n','') in vi):
+        if (tmp == '' or len(tmp.split(' ')) <= 3 or tmp.replace('\n','') in vi):
             print('continue')
             continue
         
@@ -135,13 +162,38 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
         ############
         print('XỬ LÝ PHÂN LOẠI NGÔN NGỮ - VI')
         try:
-            if (detect(tmp) == 'vi' or  langid.classify(tmp)[0] == 'vi'):
+            de  = detect(tmp)
+            cl = langid.classify(tmp)[0]
+            count_vi = 0
+            count_en = 0
+            if(de == 'vi' or cl == 'vi'):
+                count_vi += 1
+            if(de == 'en' or cl == 'en'):
+                count_en += 1
+            #------------------------------
+            if(len(tmp.split(' ')) < 15):
+                lang = lang_classify(tmp, 'vi')
+                if (lang == 'vi'):
+                    tmp_split = split_sentence(tmp.replace('\n',''))
+                    for sen in tmp_split:
+                        vi_nltk.append(sen)
+                    vi.append(tmp.replace('\n',''))
+                    print('Duyệt')
+            elif (de == 'vi' and  cl == 'vi'):
                 tmp_split = split_sentence(tmp.replace('\n',''))
                 for sen in tmp_split:
                     vi_nltk.append(sen)
                 vi.append(tmp.replace('\n',''))
                 print('Duyệt')
-            elif (detect(tmp) != 'en' or  langid.classify(tmp)[0] != 'en'):
+            elif (count_vi == count_en):
+                lang = lang_classify(tmp, 'vi')
+                if (lang == 'vi'):
+                    tmp_split = split_sentence(tmp.replace('\n',''))
+                    for sen in tmp_split:
+                        vi_nltk.append(sen)
+                    vi.append(tmp.replace('\n',''))
+                    print('Duyệt')
+            elif (de != 'en' or  cl != 'en'):
                 lang = lang_classify(tmp, 'vi')
                 if (lang == 'vi'):
                     tmp_split = split_sentence(tmp.replace('\n',''))
@@ -173,6 +225,7 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
                     en_nltk = nl_en
         ######################
         check_valid = False
+        print('Đang trong hàm collect')
         for l in range(len(vi_nltk)):
             len_vi = len(vi_nltk[l].split(' '))
             len_en = len(en_nltk[l].split(' '))
@@ -185,34 +238,36 @@ def get_corpus(url, title_xpath, en_xpath, vi_xpath, break_word, continue_word):
         if(check_valid == False):
             #print('KHÔNG CHÍNH XÁC - CONTINUE')
             return title, vi_nltk, en_nltk
+    #else:
+    vi = list(dict.fromkeys(vi))
+    en = list(dict.fromkeys(en))
+    
+    print(len(vi))
+    print(len(en))
+
+    ######################
+    # XỬ LÝ CẮT CÂU
+    if(len(vi) == 1 and len(en) == 1):
+        print('XỬ LÝ CẮT CÂU')
+        vi = split_sentence(vi[0])
+        en = split_sentence(en[0])
+        if(len(vi) != len(en)):
+            nl_vi, nl_en = normalize_sentence(vi, en)
+            if(len(nl_vi) == len(nl_en)):
+                vi = nl_vi
+                en = nl_en
+    ######################
+    min = len(vi)
+    if(min > len(en)):
+        min = len(en)
+        vi = vi[:min]
     else:
-        vi = list(dict.fromkeys(vi))
-        en = list(dict.fromkeys(en))
-        
-        print(len(vi))
-        print(len(en))
+        en = en[:min]
 
-        ######################
-        # XỬ LÝ CẮT CÂU
-        if(len(vi) == 1 and len(en) == 1):
-            print('XỬ LÝ CẮT CÂU')
-            vi = split_sentence(vi[0])
-            en = split_sentence(en[0])
-            if(len(vi) != len(en)):
-                nl_vi, nl_en = normalize_sentence(vi, en)
-                if(len(nl_vi) == len(nl_en)):
-                    vi = nl_vi
-                    en = nl_en
-        ######################
-        min = len(vi)
-        if(min > len(en)):
-            min = len(en)
-            vi = vi[:min]
-        else:
-            en = en[:min]
-
-        
-        return title, vi, en
+    print('TITLE: ', title)
+    print('EN: ', en)
+    print('VI: ', vi)
+    return title, vi, en
 
 # Hạm này dùng để phân câu cho một đoạn
 def split_sentence(text):
@@ -272,24 +327,22 @@ def lang_classify(text, lang):
         other_lang = 'en'
     elif(lang == 'en'):
         other_lang = 'vi'
-    count = 0
+    count_lang = 0
+    count_other_lang = 0
     for i in text.split(' '):
         try:
             de = detect(i)
             cl = langid.classify(i)[0]
             if(de == lang or cl == lang):
-                count += 1
+                count_lang += 1
             if(de == other_lang or cl == other_lang):
-                count -= 1
+                count_other_lang += 1
         except:
-            print('DÍNH LỖI')
             continue
     count_word  = len(text.split(' '))
-    print(lang,': ',count)
-    print('total: ', count_word)
 
-    if(count/count_word >= 0.25):
-        print('Duyệt: ', text.replace('\n',''))
+    if(count_other_lang < count_lang):
+        print('Duyệt xử lý thứ cấp: ', text.replace('\n',''))
         return lang
     else:
         print("Cho qua")

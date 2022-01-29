@@ -12,4 +12,7 @@ urlpatterns = [
     path('progress/download', views.update_progress_download, name='update_progress_download'),
     path('progress/save', views.update_progress_save, name='update_progress_save'),
     path('result/list_document', views.result_list_document, name='resutl_list_document'),
+    path('thread/pause', views.pause_thread, name='pause_thread'),
+    path('thread/resume', views.resume_thread, name='resume_thread'),
+    path('thread/stop', views.stop_thread, name='stop_thread'),
 ]

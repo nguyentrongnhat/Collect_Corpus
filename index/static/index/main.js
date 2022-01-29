@@ -305,6 +305,7 @@ $(document).ready(function(){
                             clearInterval(intervalId_download)
                             $('#label-document-save-' + id).text('saved - ' + number_of_saved + ' - done')
                             setTimeout(()=>{
+                                $('#block-btn-control-thread-' + id).css('display', 'none')
                                 $('#block-btn-task-info-' + id).css('display', 'flex')
                             },1000)
                         }
@@ -386,6 +387,7 @@ $(document).ready(function(){
                             clearInterval(intervalId_download)
                             $('#label-document-save-' + id).text('saved - ' + number_of_saved + ' - done')
                             setTimeout(()=>{
+                                $('#block-btn-control-thread-' + id).css('display', 'none')
                                 $('#block-btn-task-info-' + id).css('display', 'flex')
                             },1000)
                         }
@@ -465,6 +467,7 @@ $(document).ready(function(){
                             clearInterval(intervalId_download)
                             $('#label-document-save-' + id).text('saved - ' + number_of_saved + ' - done')
                             setTimeout(()=>{
+                                $('#block-btn-control-thread-' + id).css('display', 'none')
                                 $('#block-btn-task-info-' + id).css('display', 'flex')
                             },1000)
                         }
@@ -565,7 +568,65 @@ $(document).ready(function(){
         $('#' + thread_name).remove()
     })
 
-    
+    //------------ PAUSE - RESUME - STOP THREAD -----------------
+    // pause
+    $(document).on('click', '.btn-pause-thread', e=>{
+        let thread_name = $(e.target).attr('thread')
+        console.log('show detail btn pause: ', thread_name)
+        $.ajax({
+            url: 'elastic/thread/pause',
+            data: {
+                thread_name: thread_name,
+                csrfmiddlewaretoken: csrfToken
+            },
+            type: 'POST',
+        }).done(function(res) {
+            list_thread = res['Thread name']
+            console.log(list_thread)
+            $('#progress-download-' + thread_name).addClass('bg-warning')
+            $('#progress-save-' + thread_name).addClass('bg-warning')
+        })
+    })
+    // resume
+    $(document).on('click', '.btn-resume-thread', e=>{
+        let thread_name = $(e.target).attr('thread')
+        console.log('show detail btn resume: ', thread_name)
+        $.ajax({
+            url: 'elastic/thread/resume',
+            data: {
+                thread_name: thread_name,
+                csrfmiddlewaretoken: csrfToken
+            },
+            type: 'POST',
+        }).done(function(res) {
+            list_thread = res['Thread name']
+            console.log(list_thread)
+            $('#progress-download-' + thread_name).removeClass('bg-warning')
+            $('#progress-save-' + thread_name).removeClass('bg-warning')
+        })
+    })
+    //stop
+    $(document).on('click', '.btn-stop-thread', e=>{
+        let thread_name = $(e.target).attr('thread')
+        console.log('show detail btn stop: ', thread_name)
+        $.ajax({
+            url: 'elastic/thread/stop',
+            data: {
+                thread_name: thread_name,
+                csrfmiddlewaretoken: csrfToken
+            },
+            type: 'POST',
+        }).done(function(res) {
+            list_thread = res['Thread name']
+            console.log(list_thread)
+            $('#progress-download-' + thread_name).addClass('bg-danger')
+            $('#progress-save-' + thread_name).addClass('bg-danger')
+            $('#block-btn-control-thread-' + thread_name).css('display', 'none')
+            $('#block-btn-task-info-' + thread_name).css('display', 'flex')
+        })
+    })
+
+
     function create_block_info_downloading(id, name, source_name) {
         let html = '<li class="list-group-item list-group-item-tasking" id="' + id + '">'
         +    '<div class="block-tasking">'
@@ -589,6 +650,24 @@ $(document).ready(function(){
         +            '</div>'
         +        '</div>'
         +    '</div>'
+
+        +    '<div class="block-btn-control-thread" id="block-btn-control-thread-' + id +'" style="display: flex; justify-content: space-between; margin-top: 15px;">'
+        +        '<div class="btn btn-warning btn-pause-thread" id="btn-pause-thread-'+ id +'" thread="'+ id +'" style="display: flex; width: 80px; justify-content: center;">'
+        +            '<i class="far fa-pause-circle" thread="'+ id +'"></i>'
+        +            '<div style="font-size: 11px; margin-left: 3px;" thread="'+ id +'">Pause</div>'
+        +        '</div>'
+
+        +        '<div class="btn btn-primary btn-resume-thread" id="btn-resume-thread-'+ id +'" thread="'+ id +'" style="display: flex; width: 80px; justify-content: center;">'
+        +            '<i class="far fa-play-circle" thread="'+ id +'"></i>'
+        +            '<div style="font-size: 11px; margin-left: 3px;" thread="'+ id +'">Resume</div>'
+        +        '</div>'
+
+        +        '<div class="btn btn-danger btn-stop-thread" id="btn-stop-thread-'+ id +'" thread="'+ id +'" style="display: flex; width: 80px; justify-content: center;">'
+        +            '<i class="far fa-stop-circle" thread="'+ id +'"></i>'
+        +            '<div style="font-size: 11px; margin-left: 3px;" thread="'+ id +'">Stop</div>'
+        +        '</div>'
+        +    '</div>'
+
         +    '<div class="block-button-result-task" id="block-btn-task-info-' + id +'">'
         +       '<a href="elastic/result/list_document?thread_name=' + id + '" target="_blank">'
         +           '<button type="button" class="btn btn-success btn-result-task-item btn-show-detail-download" thread="'+ id +'" title="Xem kết quả" style="display: flex;">'
